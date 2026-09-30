@@ -1,0 +1,8 @@
+<resources>
+    <style name="Theme.BanketLux" parent="android:style/Theme.Material.NoActionBar">
+        <item name="android:windowBackground">#0B161D</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:statusBarColor">#0B161D</item>
+        <item name="android:navigationBarColor">#0F1E28</item>
+    </style>
+</resources>
