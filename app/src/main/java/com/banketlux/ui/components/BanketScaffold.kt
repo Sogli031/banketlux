@@ -13,8 +13,10 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -25,10 +27,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.banketlux.R
-import com.banketlux.ui.theme.BanketGold
 import com.banketlux.ui.theme.BanketLabelCaps
 
 /**
@@ -47,14 +50,19 @@ fun BanketTopBar(
     TopAppBar(
         title = {
             if (subtitle == null) {
-                Text(title, style = MaterialTheme.typography.titleLarge)
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleLarge,
+                    modifier = Modifier.semantics { heading() }
+                )
             } else {
                 Column {
                     Text(
                         text = title,
                         style = MaterialTheme.typography.titleLarge,
                         maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.semantics { heading() }
                     )
                     Text(
                         text = subtitle,
@@ -95,7 +103,7 @@ private fun BanketLogoMark() {
             modifier = Modifier
                 .size(36.dp)
                 .clip(CircleShape)
-                .border(1.dp, BanketGold.copy(alpha = 0.4f), CircleShape)
+                .border(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.4f), CircleShape)
         )
     }
 }
@@ -107,7 +115,7 @@ fun BanketSectionLabel(text: String, modifier: Modifier = Modifier) {
         text = text.uppercase(),
         style = BanketLabelCaps,
         color = MaterialTheme.colorScheme.primary,
-        modifier = modifier
+        modifier = modifier.semantics { heading() }
     )
 }
 
@@ -132,7 +140,7 @@ fun BanketSection(
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
-        Spacer(modifier = Modifier.height(10.dp))
+        Spacer(modifier = Modifier.height(8.dp))
         content()
     }
 }
@@ -144,28 +152,25 @@ fun BanketCard(
     onClick: (() -> Unit)? = null,
     content: @Composable ColumnScope.() -> Unit
 ) {
-    val shape = MaterialTheme.shapes.large
-    val color = MaterialTheme.colorScheme.surfaceContainerLow
+    val colors = CardDefaults.outlinedCardColors(
+        containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+    )
     val border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
     if (onClick != null) {
-        Surface(
+        OutlinedCard(
             onClick = onClick,
             modifier = modifier.fillMaxWidth(),
-            shape = shape,
-            color = color,
-            border = border
-        ) {
-            Column(content = content)
-        }
+            colors = colors,
+            border = border,
+            content = content
+        )
     } else {
-        Surface(
+        OutlinedCard(
             modifier = modifier.fillMaxWidth(),
-            shape = shape,
-            color = color,
-            border = border
-        ) {
-            Column(content = content)
-        }
+            colors = colors,
+            border = border,
+            content = content
+        )
     }
 }
 
@@ -174,12 +179,12 @@ fun BanketCard(
 fun BanketChip(text: String, modifier: Modifier = Modifier) {
     Surface(
         modifier = modifier,
-        shape = MaterialTheme.shapes.extraLarge,
+        shape = MaterialTheme.shapes.small,
         color = MaterialTheme.colorScheme.surfaceContainerHigh,
         contentColor = MaterialTheme.colorScheme.onSurfaceVariant
     ) {
         Text(
-            modifier = Modifier.padding(horizontal = 9.dp, vertical = 3.dp),
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
             text = text,
             style = MaterialTheme.typography.labelSmall
         )

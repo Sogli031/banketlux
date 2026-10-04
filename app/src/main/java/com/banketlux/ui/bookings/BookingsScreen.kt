@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Phone
@@ -24,6 +25,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -41,9 +43,8 @@ import com.banketlux.ui.components.BanketChip
 import com.banketlux.ui.components.BanketEmptyState
 import com.banketlux.ui.components.BanketTopBar
 import com.banketlux.ui.components.formatRsd
-import com.banketlux.ui.theme.BanketIconMuted
-import com.banketlux.ui.theme.BanketInkSoft
 import com.banketlux.ui.theme.BanketLabelCaps
+import com.banketlux.ui.theme.banketItemMotion
 import com.banketlux.ui.theme.BanketMono
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -70,6 +71,10 @@ fun BookingsScreen(
     val viewModel: BookingListViewModel = viewModel(factory = factory)
     val uiState by viewModel.uiState.collectAsState()
 
+    val listState = rememberLazyListState()
+    // FAB se skuplja u ikonicu čim lista krene da se skroluje, a vraća na vrhu (Material obrazac).
+    val fabExpanded by remember { derivedStateOf { !listState.canScrollBackward } }
+
     // Pri svakom povratku na ekran pomeri granicu "danas" — bitno posle ponoći.
     LaunchedEffect(Unit) { viewModel.refreshToday() }
 
@@ -84,8 +89,14 @@ fun BookingsScreen(
         },
         floatingActionButton = {
             ExtendedFloatingActionButton(
+                expanded = fabExpanded,
                 text = { Text("Novo zakazivanje") },
-                icon = { Icon(Icons.Default.Add, contentDescription = null) },
+                icon = {
+                    Icon(
+                        Icons.Default.Add,
+                        contentDescription = if (fabExpanded) null else "Novo zakazivanje"
+                    )
+                },
                 onClick = onCreateBooking,
                 containerColor = MaterialTheme.colorScheme.primary,
                 contentColor = MaterialTheme.colorScheme.onPrimary,
@@ -103,19 +114,21 @@ fun BookingsScreen(
             )
         } else {
             LazyColumn(
+                state = listState,
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(innerPadding),
                 contentPadding = PaddingValues(
                     start = 16.dp,
-                    top = 6.dp,
+                    top = 8.dp,
                     end = 16.dp,
                     bottom = 96.dp
                 ),
-                verticalArrangement = Arrangement.spacedBy(10.dp)
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 items(uiState.items, key = { it.bookingId }) { item ->
                     BookingListRow(
+                        modifier = banketItemMotion(),
                         item = item,
                         onClick = { onEditBooking(item.bookingId) }
                     )
@@ -128,7 +141,8 @@ fun BookingsScreen(
 @Composable
 private fun BookingListRow(
     item: BookingListItemUi,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     val rentalLabel = remember(item.rentalStartDate, item.rentalEndDate) {
         formatRentalPeriod(item.rentalStartDate, item.rentalEndDate)
@@ -137,7 +151,7 @@ private fun BookingListRow(
         rentalDays(item.rentalStartDate, item.rentalEndDate)?.let { "$it ${dayWord(it)}" }
     }
 
-    BanketCard(onClick = onClick) {
+    BanketCard(modifier = modifier, onClick = onClick) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -174,7 +188,7 @@ private fun BookingListRow(
                 )
             }
 
-            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 ContactLine(icon = Icons.Default.Phone, value = item.customerPhone)
                 ContactLine(icon = Icons.Default.Place, value = item.location)
             }
@@ -186,7 +200,7 @@ private fun BookingListRow(
                         Text(
                             text = line,
                             style = MaterialTheme.typography.bodyMedium,
-                            color = BanketInkSoft,
+                            color = MaterialTheme.colorScheme.onSurface,
                             maxLines = 2,
                             overflow = TextOverflow.Ellipsis
                         )
@@ -232,12 +246,12 @@ private fun ContactLine(icon: ImageVector, value: String) {
             imageVector = icon,
             contentDescription = null,
             modifier = Modifier.size(16.dp),
-            tint = BanketIconMuted
+            tint = MaterialTheme.colorScheme.onSurfaceVariant
         )
         Text(
             text = value,
             style = MaterialTheme.typography.bodyMedium,
-            color = BanketInkSoft,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
             maxLines = 2,
             overflow = TextOverflow.Ellipsis
         )

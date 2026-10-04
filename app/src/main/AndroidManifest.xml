@@ -12,6 +12,7 @@
         android:fullBackupContent="false"
         android:icon="@drawable/logo"
         android:label="BanketLux"
+        android:enableOnBackInvokedCallback="true"
         android:supportsRtl="true"
         android:theme="@style/Theme.BanketLux">
         <activity

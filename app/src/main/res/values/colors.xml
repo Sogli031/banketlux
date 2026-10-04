@@ -1,0 +1,4 @@
+<resources>
+    <!-- Mora da se poklapa sa BanketBackground u ui/theme/Color.kt; vidi se samo pre prvog frejma. -->
+    <color name="banket_window_background">#0B161D</color>
+</resources>

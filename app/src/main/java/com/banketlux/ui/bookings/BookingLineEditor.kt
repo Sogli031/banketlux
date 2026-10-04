@@ -15,7 +15,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedCard
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -32,7 +31,9 @@ import com.banketlux.data.local.entity.EquipmentEntity
 import com.banketlux.domain.model.PriceUnit
 import com.banketlux.domain.pricing.BookingLineInput
 import com.banketlux.domain.pricing.BookingTotals
+import com.banketlux.ui.components.BanketSwitchRow
 import com.banketlux.ui.components.formatRsd
+import com.banketlux.ui.theme.BanketAppear
 
 @Composable
 fun BookingLineEditor(
@@ -67,116 +68,108 @@ fun BookingLineEditor(
         }
     }
 
-    OutlinedCard(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 4.dp)
-    ) {
-        Column(
+    // Nova stavka se otvara (visina + providnost); uklanjanje je trenutno.
+    BanketAppear {
+        OutlinedCard(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(12.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+                .padding(vertical = 4.dp)
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(12.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                EquipmentSelectorField(
-                    modifier = Modifier.weight(1f),
-                    selectedName = line.equipmentName,
-                    onClick = { showEquipmentPicker = true }
-                )
-
-                IconButton(onClick = onRemove) {
-                    Icon(Icons.Default.Delete, contentDescription = "Obriši stavku")
-                }
-            }
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                OutlinedTextField(
-                    modifier = Modifier.weight(1f),
-                    value = line.quantityInput,
-                    onValueChange = onQuantityChange,
-                    label = { Text("Količina") },
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
-                )
-                OutlinedTextField(
-                    modifier = Modifier.weight(1f),
-                    value = line.unitPriceInput,
-                    onValueChange = onPriceChange,
-                    label = { Text("Cena (${line.currency.label} ${line.priceUnit.label})") },
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
-                )
-            }
-
-            if (line.equipmentItemId != null) {
-                Text(
-                    text = when (line.priceUnit) {
-                        PriceUnit.PER_DAY -> "Naplata po danu — množi se sa $days ${dayWord(days)}."
-                        PriceUnit.PER_EVENT -> "Paušal za celo veselje — broj dana ne utiče na cenu."
-                    },
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-
-            lineAmountRsd?.let { amount ->
-                Text(
-                    text = "Ukupno stavka: ${formatRsd(amount)}",
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-            }
-
-            if (isTent) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = "Sami peru stolnjake",
-                            style = MaterialTheme.typography.bodyLarge
-                        )
-                        Text(
-                            text = if (line.washing) {
-                                "Vraćaju prljave — naplaćuje se pranje."
-                            } else {
-                                "Bez naplate pranja."
-                            },
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                    EquipmentSelectorField(
+                        modifier = Modifier.weight(1f),
+                        selectedName = line.equipmentName,
+                        onClick = { showEquipmentPicker = true }
+                    )
+    
+                    IconButton(onClick = onRemove) {
+                        Icon(Icons.Default.Delete, contentDescription = "Obriši stavku")
                     }
-                    // Uključeno = mušterija pere sama (bez naplate); `washing` znači naplatu.
-                    Switch(checked = !line.washing, onCheckedChange = { onWashingChange(!it) })
                 }
-                if (line.washing) {
+    
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
                     OutlinedTextField(
-                        modifier = Modifier.fillMaxWidth(),
-                        value = line.washingPriceInput,
-                        onValueChange = onWashingPriceChange,
-                        label = { Text("Cena pranja (RSD)") },
+                        modifier = Modifier.weight(1f),
+                        value = line.quantityInput,
+                        onValueChange = onQuantityChange,
+                        label = { Text("Količina") },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                    )
+                    OutlinedTextField(
+                        modifier = Modifier.weight(1f),
+                        value = line.unitPriceInput,
+                        onValueChange = onPriceChange,
+                        label = { Text("Cena (${line.currency.label} ${line.priceUnit.label})") },
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
                     )
                 }
+    
+                if (line.equipmentItemId != null) {
+                    Text(
+                        text = when (line.priceUnit) {
+                            PriceUnit.PER_DAY -> "Naplata po danu — množi se sa $days ${dayWord(days)}."
+                            PriceUnit.PER_EVENT -> "Paušal za celo veselje — broj dana ne utiče na cenu."
+                        },
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+    
+                lineAmountRsd?.let { amount ->
+                    Text(
+                        text = "Ukupno stavka: ${formatRsd(amount)}",
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                }
+    
+                if (isTent) {
+                    // Uključeno = naplaćuje se pranje (`washing`), pa prekidač kaže ono što radi.
+                    BanketSwitchRow(
+                        title = "Naplati pranje stolnjaka",
+                        description = if (line.washing) {
+                            "Vraćaju prljave — naplaćuje se pranje."
+                        } else {
+                            "Mušterija pere sama — bez naplate pranja."
+                        },
+                        checked = line.washing,
+                        onCheckedChange = onWashingChange
+                    )
+                    if (line.washing) {
+                        OutlinedTextField(
+                            modifier = Modifier.fillMaxWidth(),
+                            value = line.washingPriceInput,
+                            onValueChange = onWashingPriceChange,
+                            label = { Text("Cena pranja (RSD)") },
+                            singleLine = true,
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                        )
+                    }
+                }
+    
+                OutlinedTextField(
+                    modifier = Modifier.fillMaxWidth(),
+                    value = line.notes,
+                    onValueChange = onNotesChange,
+                    label = { Text("Napomena stavke") }
+                )
             }
-
-            OutlinedTextField(
-                modifier = Modifier.fillMaxWidth(),
-                value = line.notes,
-                onValueChange = onNotesChange,
-                label = { Text("Napomena stavke") }
-            )
         }
     }
 
@@ -202,8 +195,10 @@ private fun EquipmentSelectorField(
 ) {
     val hasSelection = selectedName.isNotBlank()
 
+    // OutlinedCard(onClick) je ujedno dugme za TalkBack; naziv i izabrana oprema se čitaju zajedno.
     OutlinedCard(
-        modifier = modifier.clickable(onClick = onClick)
+        onClick = onClick,
+        modifier = modifier
     ) {
         Row(
             modifier = Modifier
@@ -236,7 +231,7 @@ private fun EquipmentSelectorField(
             }
             Icon(
                 imageVector = Icons.Default.UnfoldMore,
-                contentDescription = "Otvori listu opreme",
+                contentDescription = null,
                 tint = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }

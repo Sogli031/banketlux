@@ -37,11 +37,9 @@ sealed class AppDestination(
     )
 
     companion object {
-        val bottomNavItems: List<AppDestination> = listOf(
-            Bookings,
-            Equipment,
-            Earnings,
-            Settings
-        )
+        // Getter, ne polje: polje se puni u statičkoj inicijalizaciji nadklase, pa bi pri
+        // prvom pristupu preko AppDestination.Bookings zatekla još neinicijalizovane objekte (null).
+        val bottomNavItems: List<AppDestination>
+            get() = listOf(Bookings, Equipment, Earnings, Settings)
     }
 }

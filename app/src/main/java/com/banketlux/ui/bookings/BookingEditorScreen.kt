@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -47,6 +48,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -65,8 +67,9 @@ import com.banketlux.ui.components.BanketSectionLabel
 import com.banketlux.ui.components.BanketTone
 import com.banketlux.ui.components.BanketTopBar
 import com.banketlux.ui.components.formatRsd
-import com.banketlux.ui.theme.BanketGold
+import com.banketlux.ui.theme.BanketAmountMedium
 import com.banketlux.ui.theme.BanketMono
+import com.banketlux.ui.theme.rememberAnimatedAmount
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneOffset
@@ -100,6 +103,8 @@ fun BookingEditorScreen(
     val viewModel: BookingEditorViewModel = viewModel(factory = factory)
     val uiState by viewModel.uiState.collectAsState()
     val equipmentItems by viewModel.equipmentItems.collectAsState()
+    // Ukupna cena glatko "kliza" do nove vrednosti dok se dodaju stavke.
+    val animatedTotal = rememberAnimatedAmount(uiState.totalPriceRsd)
 
     val tentIds by viewModel.tentEquipmentIds.collectAsState()
 
@@ -234,11 +239,7 @@ fun BookingEditorScreen(
                             )
                         }
                         OutlinedButton(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(44.dp),
-                            shape = MaterialTheme.shapes.medium,
-                            border = BorderStroke(1.dp, BanketGold.copy(alpha = 0.5f)),
+                            modifier = Modifier.fillMaxWidth(),
                             onClick = viewModel::addLine
                         ) {
                             Icon(
@@ -246,7 +247,7 @@ fun BookingEditorScreen(
                                 contentDescription = null,
                                 modifier = Modifier.size(18.dp)
                             )
-                            Text("Dodaj stavku", modifier = Modifier.padding(start = 6.dp))
+                            Text("Dodaj stavku", modifier = Modifier.padding(start = 8.dp))
                         }
                     }
                 }
@@ -258,18 +259,18 @@ fun BookingEditorScreen(
                     modifier = Modifier.fillMaxWidth(),
                     shape = MaterialTheme.shapes.large,
                     color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                    border = BorderStroke(1.dp, BanketGold.copy(alpha = 0.25f))
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.25f))
                 ) {
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(6.dp)
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         BanketSectionLabel("Ukupno za ${uiState.rentalDays} ${dayWord(uiState.rentalDays)}")
                         Text(
-                            text = formatRsd(uiState.totalPriceRsd),
-                            style = MaterialTheme.typography.headlineSmall
+                            text = formatRsd(animatedTotal),
+                            style = BanketAmountMedium
                         )
                         Text(
                             text = "Zbir se ažurira dok dodaješ stavke. Evro cene su preračunate " +
@@ -289,6 +290,13 @@ fun BookingEditorScreen(
                             ) {
                                 Text("Pokušaj ponovo da preuzmeš kurs")
                             }
+                            // Napomena se vidi samo dok kurs ne radi; inače se ništa ne prikazuje.
+                            Text(
+                                text = "Kurs dolazi sa exchangerate-api.com. Dok servis ne proradi, " +
+                                    "računa se po poslednjem sačuvanom kursu — proveri cene u evrima.",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
                         }
                     }
                 }
@@ -329,8 +337,7 @@ fun BookingEditorScreen(
                 Button(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(52.dp),
-                    shape = MaterialTheme.shapes.medium,
+                        .height(56.dp),
                     enabled = !uiState.isSaving && !uiState.isDeleting,
                     onClick = { viewModel.saveBooking(onSaved = onSaved) }
                 ) {
@@ -463,12 +470,15 @@ private fun DatePickerField(
     Surface(
         onClick = { showDialog = true },
         modifier = modifier,
-        shape = MaterialTheme.shapes.medium,
-        color = MaterialTheme.colorScheme.surfaceContainerLow,
+        // Isti oblik, ivica i visina kao susedna OutlinedTextField polja.
+        shape = MaterialTheme.shapes.extraSmall,
+        color = Color.Transparent,
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
     ) {
         Row(
-            modifier = Modifier.padding(start = 14.dp, top = 10.dp, end = 12.dp, bottom = 10.dp),
+            modifier = Modifier
+                .heightIn(min = 56.dp)
+                .padding(start = 16.dp, top = 8.dp, end = 12.dp, bottom = 8.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -488,7 +498,7 @@ private fun DatePickerField(
             }
             Icon(
                 imageVector = Icons.Default.CalendarMonth,
-                contentDescription = "Otvori kalendar za $label",
+                contentDescription = null,
                 tint = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.size(20.dp)
             )

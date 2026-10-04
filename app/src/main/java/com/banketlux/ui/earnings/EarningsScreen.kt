@@ -1,6 +1,11 @@
 package com.banketlux.ui.earnings
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -12,7 +17,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material3.AlertDialog
@@ -32,7 +36,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
@@ -49,9 +57,10 @@ import com.banketlux.ui.components.BanketSectionLabel
 import com.banketlux.ui.components.BanketTopBar
 import com.banketlux.ui.bookings.formatDate
 import com.banketlux.ui.components.formatRsd
-import com.banketlux.ui.theme.BanketGold
-import com.banketlux.ui.theme.BanketIconMuted
-import com.banketlux.ui.theme.BanketInkSoft
+import com.banketlux.ui.theme.BanketAmountLarge
+import com.banketlux.ui.theme.BanketMotion
+import com.banketlux.ui.theme.banketItemMotion
+import com.banketlux.ui.theme.rememberAnimatedAmount
 import com.banketlux.ui.theme.BanketMono
 
 @Composable
@@ -101,7 +110,7 @@ fun EarningsScreen(
                     .padding(innerPadding),
                 contentPadding = PaddingValues(
                     start = 16.dp,
-                    top = 6.dp,
+                    top = 8.dp,
                     end = 16.dp,
                     bottom = 24.dp
                 ),
@@ -109,6 +118,7 @@ fun EarningsScreen(
             ) {
                 item(key = "total") {
                     TotalCard(
+                        modifier = banketItemMotion(),
                         totalRsd = overview.totalRsd,
                         jobCount = overview.jobCount
                     )
@@ -117,6 +127,7 @@ fun EarningsScreen(
                 if (overview.undatedCount > 0) {
                     item(key = "undated") {
                         Text(
+                            modifier = banketItemMotion(),
                             text = "Uključeno u ukupno, ali bez čitljivog datuma (nije u godinama): " +
                                 "${formatRsd(overview.undatedRsd)} · " +
                                 "${overview.undatedCount} ${jobWord(overview.undatedCount)}",
@@ -129,6 +140,7 @@ fun EarningsScreen(
                 overview.years.forEach { year ->
                     item(key = "year-${year.year}") {
                         YearCard(
+                            modifier = banketItemMotion(),
                             year = year,
                             isExpanded = year.year in uiState.expandedYears,
                             onToggle = { viewModel.toggleYear(year.year) },
@@ -174,24 +186,26 @@ fun EarningsScreen(
 
 /** Hero blok: zlatni naslov, iznos u monospace, broj poslova ispod. */
 @Composable
-private fun TotalCard(totalRsd: Int, jobCount: Int) {
+private fun TotalCard(totalRsd: Int, jobCount: Int, modifier: Modifier = Modifier) {
+    // Ukupan iznos "odbroji" pri prvom prikazu i glatko prati izmene (npr. brisanje posla).
+    val animatedTotal = rememberAnimatedAmount(totalRsd, fromZero = true)
     Surface(
-        modifier = Modifier.fillMaxWidth(),
-        shape = MaterialTheme.shapes.extraLarge,
+        modifier = modifier.fillMaxWidth(),
+        shape = MaterialTheme.shapes.large,
         color = MaterialTheme.colorScheme.primaryContainer,
         contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-        border = BorderStroke(1.dp, BanketGold.copy(alpha = 0.3f))
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.3f))
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 18.dp, vertical = 20.dp),
-            verticalArrangement = Arrangement.spacedBy(6.dp)
+                .padding(horizontal = 16.dp, vertical = 20.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             BanketSectionLabel("Ukupno zarađeno")
             Text(
-                text = formatRsd(totalRsd),
-                style = MaterialTheme.typography.headlineLarge
+                text = formatRsd(animatedTotal),
+                style = BanketAmountLarge
             )
             Text(
                 text = "$jobCount ${jobWord(jobCount)}",
@@ -204,6 +218,7 @@ private fun TotalCard(totalRsd: Int, jobCount: Int) {
 
 @Composable
 private fun YearCard(
+    modifier: Modifier = Modifier,
     year: YearEarnings,
     isExpanded: Boolean,
     onToggle: () -> Unit,
@@ -211,12 +226,21 @@ private fun YearCard(
     onToggleMonth: (String) -> Unit,
     onDeleteEntry: (EarningEntity) -> Unit
 ) {
-    BanketCard {
+    BanketCard(modifier = modifier) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .clickable(onClick = onToggle)
-                .padding(start = 16.dp, top = 14.dp, end = 8.dp, bottom = 14.dp),
+                .clickable(
+                    onClickLabel = if (isExpanded) {
+                        "Sakrij mesece za ${year.year}."
+                    } else {
+                        "Prikaži mesece za ${year.year}."
+                    },
+                    role = Role.Button,
+                    onClick = onToggle
+                )
+                .semantics { stateDescription = if (isExpanded) "Rašireno" else "Skupljeno" }
+                .padding(start = 16.dp, top = 16.dp, end = 8.dp, bottom = 16.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -236,18 +260,14 @@ private fun YearCard(
                 style = MaterialTheme.typography.titleMedium.copy(fontFamily = BanketMono),
                 fontWeight = FontWeight.Medium
             )
-            Icon(
-                imageVector = if (isExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-                contentDescription = if (isExpanded) {
-                    "Sakrij mesece za ${year.year}."
-                } else {
-                    "Prikaži mesece za ${year.year}."
-                },
-                tint = BanketIconMuted
-            )
+            ExpandChevron(isExpanded)
         }
 
-        AnimatedVisibility(visible = isExpanded) {
+        AnimatedVisibility(
+            visible = isExpanded,
+            enter = ExpandEnter,
+            exit = ExpandExit
+        ) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -259,7 +279,11 @@ private fun YearCard(
                     val key = "${month.year}-${month.month}"
                     val monthExpanded = key in expandedMonths
                     MonthRow(month, isExpanded = monthExpanded, onToggle = { onToggleMonth(key) })
-                    AnimatedVisibility(visible = monthExpanded) {
+                    AnimatedVisibility(
+                        visible = monthExpanded,
+                        enter = ExpandEnter,
+                        exit = ExpandExit
+                    ) {
                         Column {
                             month.entries.forEach { entry ->
                                 EntryRow(entry, onDelete = { onDeleteEntry(entry) })
@@ -296,7 +320,7 @@ private fun EntryRow(entry: EarningEntity, onDelete: () -> Unit) {
         Text(
             text = formatRsd(entry.amountRsd),
             style = MaterialTheme.typography.bodyMedium.copy(fontFamily = BanketMono),
-            color = BanketInkSoft
+            color = MaterialTheme.colorScheme.onSurface
         )
         IconButton(onClick = onDelete) {
             Icon(
@@ -313,8 +337,13 @@ private fun MonthRow(month: MonthEarnings, isExpanded: Boolean, onToggle: () -> 
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onToggle)
-            .padding(vertical = 10.dp),
+            .clickable(
+                onClickLabel = if (isExpanded) "Sakrij poslove" else "Prikaži poslove",
+                role = Role.Button,
+                onClick = onToggle
+            )
+            .semantics { stateDescription = if (isExpanded) "Rašireno" else "Skupljeno" }
+            .padding(vertical = 12.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -332,13 +361,9 @@ private fun MonthRow(month: MonthEarnings, isExpanded: Boolean, onToggle: () -> 
         Text(
             text = formatRsd(month.amountRsd),
             style = MaterialTheme.typography.bodyLarge.copy(fontFamily = BanketMono),
-            color = BanketInkSoft
+            color = MaterialTheme.colorScheme.onSurface
         )
-        Icon(
-            imageVector = if (isExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-            contentDescription = if (isExpanded) "Sakrij poslove" else "Prikaži poslove",
-            tint = BanketIconMuted
-        )
+        ExpandChevron(isExpanded)
     }
 }
 
@@ -346,4 +371,23 @@ internal fun jobWord(count: Int): String = when {
     count % 10 == 1 && count % 100 != 11 -> "posao"
     count % 10 in 2..4 && count % 100 !in 12..14 -> "posla"
     else -> "poslova"
+}
+
+private val ExpandEnter = expandVertically(BanketMotion.spatial()) + fadeIn(BanketMotion.effects())
+private val ExpandExit = shrinkVertically(BanketMotion.spatial()) + fadeOut(BanketMotion.effects())
+
+/** Strelica se okreće (spring) umesto da se zameni drugom ikonicom. */
+@Composable
+private fun ExpandChevron(isExpanded: Boolean) {
+    val rotation by animateFloatAsState(
+        targetValue = if (isExpanded) 180f else 0f,
+        animationSpec = BanketMotion.spatial(),
+        label = "chevron"
+    )
+    Icon(
+        imageVector = Icons.Default.ExpandMore,
+        contentDescription = null,
+        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.rotate(rotation)
+    )
 }

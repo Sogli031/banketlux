@@ -17,7 +17,6 @@ import androidx.compose.material3.Checkbox
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -47,6 +46,7 @@ import com.banketlux.data.repository.BookingRepository
 import com.banketlux.ui.components.BanketAlertPanel
 import com.banketlux.ui.components.BanketInfoRow
 import com.banketlux.ui.components.BanketSection
+import com.banketlux.ui.components.BanketSwitchRow
 import com.banketlux.ui.components.BanketTone
 import com.banketlux.ui.components.BanketTopBar
 import com.google.android.gms.auth.api.signin.GoogleSignIn
@@ -120,7 +120,7 @@ fun SettingsScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             BanketSection("Google Drive", modifier = Modifier.fillMaxWidth()) {
-                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     val email = uiState.signedInEmail
                     // Adresa ide u svoj red preko cele širine, da ne prelama na dva reda.
                     Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
@@ -157,27 +157,12 @@ fun SettingsScreen(
                             Text("Prijavi se Google nalogom")
                         }
                     } else {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    text = "Automatski backup",
-                                    style = MaterialTheme.typography.bodyLarge
-                                )
-                                Text(
-                                    text = "Šalje se sam, jednom dnevno i posle izmena.",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-                            Switch(
-                                checked = uiState.autoBackupEnabled,
-                                onCheckedChange = { viewModel.setAutoBackupEnabled(context, it) }
-                            )
-                        }
+                        BanketSwitchRow(
+                            title = "Automatski backup",
+                            description = "Šalje se sam, jednom dnevno i posle izmena.",
+                            checked = uiState.autoBackupEnabled,
+                            onCheckedChange = { viewModel.setAutoBackupEnabled(context, it) }
+                        )
 
                         Button(
                             modifier = Modifier.fillMaxWidth(),
@@ -218,29 +203,14 @@ fun SettingsScreen(
             }
 
             BanketSection("Google kalendar", modifier = Modifier.fillMaxWidth()) {
-                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = "Upisuj zakazivanja u kalendar",
-                                style = MaterialTheme.typography.bodyLarge
-                            )
-                            Text(
-                                text = "Svako zakazivanje postaje celodnevni događaj sa " +
-                                    "imenom mušterije. Podsetnik dan ranije šalje aplikacija.",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                        Switch(
-                            checked = uiState.calendarSyncEnabled,
-                            onCheckedChange = { viewModel.setCalendarSyncEnabled(context, it) }
-                        )
-                    }
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    BanketSwitchRow(
+                        title = "Upisuj zakazivanja u kalendar",
+                        description = "Svako zakazivanje postaje celodnevni događaj sa " +
+                            "imenom mušterije. Podsetnik dan ranije šalje aplikacija.",
+                        checked = uiState.calendarSyncEnabled,
+                        onCheckedChange = { viewModel.setCalendarSyncEnabled(context, it) }
+                    )
 
                     if (uiState.calendarSyncEnabled &&
                         uiState.signedInEmail != null &&
@@ -362,29 +332,35 @@ fun SettingsScreen(
                 Text(if (decision.cloudNotAdopted) "U oblaku već postoji backup" else "Na telefonu nema podataka")
             },
             text = {
-                Text(
-                    if (decision.cloudNotAdopted) {
-                        "Na ovom Google nalogu postoji backup od ${formatTimestamp(decision.latest.createdAtMillis)}, " +
-                            "a ova instalacija ga još nije preuzela" +
-                            (if (decision.localIsEmpty) " — i na telefonu trenutno NEMA zakazivanja ni zarade" else "") +
-                            ". Ako sada pošalješ backup, on postaje najnovija verzija. Preporuka: prvo vrati podatke iz oblaka."
-                    } else {
-                        "U oblaku postoji backup od ${formatTimestamp(decision.latest.createdAtMillis)}, a na telefonu " +
-                            "trenutno nema zakazivanja, zarade ni kupaca. Ako nastaviš, prazan backup postaje najnovija verzija."
-                    }
-                )
-            },
-            confirmButton = {
-                Column(modifier = Modifier.fillMaxWidth()) {
-                    Button(modifier = Modifier.fillMaxWidth(), onClick = viewModel::restoreInsteadOfBackup) {
-                        Text("Vrati iz oblaka")
-                    }
-                    TextButton(modifier = Modifier.fillMaxWidth(), onClick = viewModel::confirmBackupAnyway) {
+                // Material dijalog ima najviše dve radnje; rizična treća ide u telo, kao tekstualno dugme.
+                Column {
+                    Text(
+                        if (decision.cloudNotAdopted) {
+                            "Na ovom Google nalogu postoji backup od ${formatTimestamp(decision.latest.createdAtMillis)}, " +
+                                "a ova instalacija ga još nije preuzela" +
+                                (if (decision.localIsEmpty) " — i na telefonu trenutno NEMA zakazivanja ni zarade" else "") +
+                                ". Ako sada pošalješ backup, on postaje najnovija verzija. Preporuka: prvo vrati podatke iz oblaka."
+                        } else {
+                            "U oblaku postoji backup od ${formatTimestamp(decision.latest.createdAtMillis)}, a na telefonu " +
+                                "trenutno nema zakazivanja, zarade ni kupaca. Ako nastaviš, prazan backup postaje najnovija verzija."
+                        }
+                    )
+                    TextButton(
+                        modifier = Modifier.align(Alignment.End),
+                        onClick = viewModel::confirmBackupAnyway
+                    ) {
                         Text("Ipak napravi backup", color = MaterialTheme.colorScheme.error)
                     }
-                    TextButton(modifier = Modifier.fillMaxWidth(), onClick = viewModel::cancelBackupDecision) {
-                        Text("Otkaži")
-                    }
+                }
+            },
+            confirmButton = {
+                Button(onClick = viewModel::restoreInsteadOfBackup) {
+                    Text("Vrati iz oblaka")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = viewModel::cancelBackupDecision) {
+                    Text("Otkaži")
                 }
             }
         )

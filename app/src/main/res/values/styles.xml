@@ -1,8 +1,7 @@
 <resources>
+    <!-- Compose crta sve boje; ovde je samo pozadina prozora da nema belog bljeska pri pokretanju.
+         Sistemske trake su providne (enableEdgeToEdge u MainActivity), bez statusBarColor / navigationBarColor. -->
     <style name="Theme.BanketLux" parent="android:style/Theme.Material.NoActionBar">
-        <item name="android:windowBackground">#0B161D</item>
-        <item name="android:windowLightStatusBar">false</item>
-        <item name="android:statusBarColor">#0B161D</item>
-        <item name="android:navigationBarColor">#0F1E28</item>
+        <item name="android:windowBackground">@color/banket_window_background</item>
     </style>
 </resources>

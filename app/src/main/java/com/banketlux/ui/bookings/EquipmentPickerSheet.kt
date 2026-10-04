@@ -31,6 +31,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
@@ -72,7 +75,8 @@ fun EquipmentPickerSheet(
             Text(
                 text = "Izaberi opremu",
                 style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.semantics { heading() }
             )
 
             OutlinedTextField(
@@ -121,7 +125,9 @@ fun EquipmentPickerSheet(
 private fun CategoryHeader(category: String) {
     Column(modifier = Modifier.fillMaxWidth()) {
         Text(
-            modifier = Modifier.padding(top = 12.dp, bottom = 4.dp),
+            modifier = Modifier
+                .padding(top = 12.dp, bottom = 4.dp)
+                .semantics { heading() },
             text = category.uppercase(),
             style = MaterialTheme.typography.labelMedium,
             fontWeight = FontWeight.Bold,
@@ -138,14 +144,20 @@ private fun EquipmentPickerRow(
     onClick: () -> Unit
 ) {
     Surface(
+        onClick = onClick,
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick),
+            .semantics { selected = isSelected },
         shape = MaterialTheme.shapes.medium,
         color = if (isSelected) {
             MaterialTheme.colorScheme.secondaryContainer
         } else {
             MaterialTheme.colorScheme.surface
+        },
+        contentColor = if (isSelected) {
+            MaterialTheme.colorScheme.onSecondaryContainer
+        } else {
+            MaterialTheme.colorScheme.onSurface
         }
     ) {
         Row(
@@ -182,7 +194,7 @@ private fun EquipmentPickerRow(
                 if (isSelected) {
                     Icon(
                         imageVector = Icons.Default.CheckCircle,
-                        contentDescription = "Izabrano",
+                        contentDescription = null,
                         tint = MaterialTheme.colorScheme.primary
                     )
                 }

@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Block
@@ -25,6 +26,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -48,9 +50,8 @@ import com.banketlux.ui.components.BanketSectionLabel
 import com.banketlux.ui.components.BanketTopBar
 import com.banketlux.ui.components.formatUnitPrice
 import com.banketlux.ui.components.groupByCategoryOrder
-import com.banketlux.ui.theme.BanketGoldLine
-import com.banketlux.ui.theme.BanketIconMuted
 import com.banketlux.ui.theme.BanketMono
+import com.banketlux.ui.theme.banketItemMotion
 
 @Composable
 fun EquipmentScreen(
@@ -76,6 +77,9 @@ fun EquipmentScreen(
         groupByCategoryOrder(uiState.items, category = { it.category }, name = { it.name })
     }
 
+    val listState = rememberLazyListState()
+    val fabExpanded by remember { derivedStateOf { !listState.canScrollBackward } }
+
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {
@@ -87,8 +91,14 @@ fun EquipmentScreen(
         },
         floatingActionButton = {
             ExtendedFloatingActionButton(
+                expanded = fabExpanded,
                 text = { Text("Dodaj opremu") },
-                icon = { Icon(Icons.Default.Add, contentDescription = null) },
+                icon = {
+                    Icon(
+                        Icons.Default.Add,
+                        contentDescription = if (fabExpanded) null else "Dodaj opremu"
+                    )
+                },
                 onClick = viewModel::openCreateDialog,
                 containerColor = MaterialTheme.colorScheme.primary,
                 contentColor = MaterialTheme.colorScheme.onPrimary,
@@ -108,6 +118,7 @@ fun EquipmentScreen(
             )
         } else {
             LazyColumn(
+                state = listState,
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(innerPadding),
@@ -117,18 +128,19 @@ fun EquipmentScreen(
                     end = 16.dp,
                     bottom = 96.dp
                 ),
-                verticalArrangement = Arrangement.spacedBy(6.dp)
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 groupedItems.forEach { (category, itemsInCategory) ->
                     item(key = "header-$category") {
                         CategoryHeader(
+                            modifier = banketItemMotion(),
                             category = category,
                             count = itemsInCategory.size
                         )
                     }
                     // Cela kategorija je jedna kartica; stavke su redovi razdvojeni linijom.
                     item(key = "group-$category") {
-                        BanketCard {
+                        BanketCard(modifier = banketItemMotion()) {
                             itemsInCategory.forEachIndexed { index, item ->
                                 if (index > 0) {
                                     HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
@@ -193,12 +205,12 @@ fun EquipmentScreen(
 }
 
 @Composable
-private fun CategoryHeader(category: String, count: Int) {
+private fun CategoryHeader(category: String, count: Int, modifier: Modifier = Modifier) {
     Row(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
-            .padding(start = 2.dp, top = 14.dp, end = 2.dp, bottom = 2.dp),
-        horizontalArrangement = Arrangement.spacedBy(10.dp),
+            .padding(start = 2.dp, top = 16.dp, end = 2.dp, bottom = 2.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         BanketSectionLabel(category)
@@ -209,7 +221,7 @@ private fun CategoryHeader(category: String, count: Int) {
         )
         HorizontalDivider(
             modifier = Modifier.weight(1f),
-            color = BanketGoldLine
+            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.18f)
         )
     }
 }
@@ -224,13 +236,13 @@ fun EquipmentRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(start = 16.dp, top = 12.dp, end = 6.dp, bottom = 12.dp),
-        horizontalArrangement = Arrangement.spacedBy(6.dp),
+            .padding(start = 16.dp, top = 12.dp, end = 4.dp, bottom = 12.dp),
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Column(
             modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(5.dp)
+            verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             Text(
                 text = item.name,
@@ -253,12 +265,12 @@ fun EquipmentRow(
                 // "Aktivno" se ne ispisuje — to je normalno stanje; vidi se samo izuzetak.
                 if (!item.active) {
                     Surface(
-                        shape = MaterialTheme.shapes.extraLarge,
+                        shape = MaterialTheme.shapes.small,
                         color = MaterialTheme.colorScheme.errorContainer,
                         contentColor = MaterialTheme.colorScheme.onErrorContainer
                     ) {
                         Text(
-                            modifier = Modifier.padding(horizontal = 9.dp, vertical = 3.dp),
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
                             text = "Neaktivno",
                             style = MaterialTheme.typography.labelSmall
                         )
@@ -279,7 +291,7 @@ fun EquipmentRow(
             Icon(
                 imageVector = Icons.Default.Edit,
                 contentDescription = "Izmeni opremu: ${item.name}",
-                tint = BanketIconMuted
+                tint = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
         // Deaktiviranje je povratno: neaktivna stavka se istim dugmetom vraća u upotrebu.
@@ -288,7 +300,7 @@ fun EquipmentRow(
                 Icon(
                     imageVector = Icons.Default.Block,
                     contentDescription = "Deaktiviraj opremu: ${item.name}",
-                    tint = BanketIconMuted
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         } else {
