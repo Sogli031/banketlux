@@ -67,7 +67,7 @@ fun rememberAnimatedAmount(target: Int, fromZero: Boolean = false): Int {
     LaunchedEffect(target) {
         animatable.animateTo(
             targetValue = target.toFloat(),
-            animationSpec = tween(durationMillis = 700, easing = BanketMotion.EmphasizedDecelerate)
+            animationSpec = tween(durationMillis = 1400, easing = BanketMotion.EmphasizedDecelerate)
         )
     }
     return animatable.value.roundToInt()
